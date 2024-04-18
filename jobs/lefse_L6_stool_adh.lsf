@@ -1,0 +1,46 @@
+#!/bin/bash
+#BSUB -q premium
+#BSUB -W 1:00
+#BSUB -J LEfSE_OA
+#BSUB -P acc_clemej05a
+#BSUB -n 1
+#BSUB -R "span[hosts=1]"
+#BSUB -R rusage[mem=50000]
+#BSUB -o %J.stdout
+#BSUB -eo %J.stderr
+#BSUB -L /bin/bash
+
+# export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 2:00 -n 1 -R rusage[mem=2000]';
+
+# source ~/.bashrc;
+# export PYTHONPATH=$PYTHONPATH:/hpc/users/buk02/tools/sandbox/lib/python3.7/site-packages/
+unset PYTHONPATH
+set -e
+set -o pipefail
+echo $PATH
+export LC_ALL=en_US.UTF-8;
+ml anaconda3;
+RUN_Lefse=/sc/arion/projects/clemej05a/kevin/oa/outputs/jobs05
+echo "MMEDS_STAGE_0"
+unzip -jo $RUN_Lefse/taxa_collapsed_table_L6.qza -d $RUN_Lefse/tmp_feature_unzip
+mv $RUN_Lefse/tmp_feature_unzip/feature-table.biom $RUN_Lefse/biom_feature.biom
+source activate qiime2-2020.8.0;
+biom convert -i $RUN_Lefse/biom_feature.biom -o $RUN_Lefse/feature_table.tsv --to-tsv
+sed -i '1d;2s/^#//' $RUN_Lefse/feature_table.tsv
+rm -rf $RUN_Lefse/tmp_feature_unzip
+echo "MMEDS_STAGE_1"
+conda deactivate;
+source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;
+format_lefse.py -i $RUN_Lefse/feature_table.tsv -m $RUN_Lefse/qiime_mapping_file_stool_adh.tsv -c Timepoints -s Timepoints -u Patient_ID -o $RUN_Lefse/lefse_table.tsv
+conda deactivate;
+source activate /sc/arion/projects/MMEDS/.modules/lefse;
+lefse_format_input.py $RUN_Lefse/lefse_table.tsv $RUN_Lefse/lefse_input.lefse -c 1 -s 2 -u 3 -o 1000000;
+echo "MMEDS_STAGE_2"
+lefse_run.py $RUN_Lefse/lefse_input.lefse $RUN_Lefse/lefse_results.res;
+echo "MMEDS_STAGE_3"
+#lefse_plot_res.py $RUN_Lefse/lefse_results.res $RUN_Lefse/results_plot.png --format png --max_feature_len 160 --subclades -1;
+lefse_plot_res.py $RUN_Lefse/lefse_results.res $RUN_Lefse/results_plot.png --format png --max_feature_len 160 --subclades -1 --dpi 200 --left_space 0.2 --right_space 0.1 --width 12;
+lefse_plot_cladogram.py $RUN_Lefse/lefse_results.res $RUN_Lefse/results_cladogram.png --format png;
+lefse_plot_features.py --format svg -f diff --archive zip $RUN_Lefse/lefse_input.lefse $RUN_Lefse/lefse_results.res $RUN_Lefse/features_biomarkers.zip;
+lefse_plot_features.py --format svg -f all --archive zip $RUN_Lefse/lefse_input.lefse $RUN_Lefse/lefse_results.res $RUN_Lefse/features_all.zip;
+echo "MMEDS_FINISHED"

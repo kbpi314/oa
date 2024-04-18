@@ -1,0 +1,59 @@
+#!/bin/bash
+#BSUB -q premium
+#BSUB -W 10:00
+#BSUB -J adamcantor22-Qiime2_0
+#BSUB -P acc_MMEDS
+#BSUB -n 10
+#BSUB -R "span[hosts=1]"
+#BSUB -R rusage[mem=10000]
+#BSUB -o %J.stdout
+#BSUB -eo %J.stderr
+#BSUB -L /bin/bash
+
+export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 2:00 -n 1 -R rusage[mem=2000]';
+
+source ~/.bashrc;
+set -e
+set -o pipefail
+echo $PATH
+export LC_ALL=en_US.UTF-8;
+ml anaconda3;
+source activate qiime2-2020.8.0;
+
+IMPORT_Q2=/sc/arion/projects/clemej05a/kevin/oa/inputs/saliva_fastq/
+RUN_Qiime2=/sc/arion/projects/clemej05a/kevin/oa/outputs/Qiime2_saliva/
+
+
+echo "MMEDS_STAGE_0"
+qiime tools import --type EMPPairedEndSequences --input-path $IMPORT_Q2 --output-path $RUN_Qiime2/qiime_artifact.qza;
+echo "MMEDS_STAGE_1"
+qiime demux emp-paired --i-seqs $RUN_Qiime2/qiime_artifact.qza --m-barcodes-file $RUN_Qiime2/qiime_mapping_file_saliva.tsv --p-no-golay-error-correction  --m-barcodes-column BarcodeSequence --o-error-correction-details $RUN_Qiime2/error_correction.qza --o-per-sample-sequences $RUN_Qiime2/demux_file.qza;
+qiime demux summarize --i-data $RUN_Qiime2/demux_file.qza --o-visualization $RUN_Qiime2/demux_viz.qzv;
+qiime dada2 denoise-paired --i-demultiplexed-seqs $RUN_Qiime2/demux_file.qza --p-trim-left-f 0 --p-trim-left-r 0 --p-trunc-len-f 0 --p-trunc-len-r 0 --o-representative-sequences $RUN_Qiime2/rep_seqs_dada2.qza --o-table $RUN_Qiime2/table_dada2.qza --o-denoising-stats $RUN_Qiime2/stats_dada2.qza --p-n-threads 10;
+qiime metadata tabulate --m-input-file $RUN_Qiime2/stats_dada2.qza --o-visualization $RUN_Qiime2/stats_dada2_visual.qzv;
+qiime feature-table merge --i-tables $RUN_Qiime2/table_dada2.qza --o-merged-table $RUN_Qiime2/otu_table.qza;
+qiime feature-table merge-seqs --i-data $RUN_Qiime2/rep_seqs_dada2.qza --o-merged-data $RUN_Qiime2/rep_seqs_table.qza;
+echo "MMEDS_STAGE_2"
+qiime feature-table filter-samples --i-table $RUN_Qiime2/otu_table.qza --m-metadata-file $RUN_Qiime2/qiime_mapping_file_saliva.tsv --o-filtered-table $RUN_Qiime2/filtered_table.qza
+qiime feature-table summarize --i-table $RUN_Qiime2/filtered_table.qza --o-visualization $RUN_Qiime2/filtered_viz.qzv;
+qiime alignment mafft --i-sequences $RUN_Qiime2/rep_seqs_table.qza --o-alignment $RUN_Qiime2/alignment.qza;
+qiime alignment mask --i-alignment $RUN_Qiime2/alignment.qza --o-masked-alignment $RUN_Qiime2/masked_alignment.qza;
+qiime phylogeny fasttree --i-alignment $RUN_Qiime2/masked_alignment.qza --o-tree $RUN_Qiime2/unrooted_tree.qza;
+qiime phylogeny midpoint-root --i-tree $RUN_Qiime2/unrooted_tree.qza --o-rooted-tree $RUN_Qiime2/rooted_tree.qza;
+qiime diversity core-metrics-phylogenetic --i-phylogeny $RUN_Qiime2/rooted_tree.qza --i-table $RUN_Qiime2/filtered_table.qza --p-sampling-depth 10000 --m-metadata-file $RUN_Qiime2/qiime_mapping_file_saliva.tsv --p-n-jobs-or-threads 10  --output-dir $RUN_Qiime2/core_metrics_results;
+qiime diversity alpha-group-significance --i-alpha-diversity $RUN_Qiime2/core_metrics_results/shannon_vector.qza --m-metadata-file $RUN_Qiime2/qiime_mapping_file_saliva.tsv --o-visualization $RUN_Qiime2/shannon_group_significance.qzv;
+qiime diversity beta-group-significance --i-distance-matrix $RUN_Qiime2/core_metrics_results/unweighted_unifrac_distance_matrix.qza --m-metadata-file $RUN_Qiime2/qiime_mapping_file_saliva.tsv --m-metadata-column Timepoints --o-visualization $RUN_Qiime2/unweighted_Timepoint_significance.qzv --p-pairwise;
+qiime tools export --input-path $RUN_Qiime2/core_metrics_results/bray_curtis_distance_matrix.qza --output-path $RUN_Qiime2/core_metrics_results/;
+qiime tools export --input-path $RUN_Qiime2/core_metrics_results/unweighted_unifrac_pcoa_results.qza --output-path $RUN_Qiime2/core_metrics_results/;
+echo "MMEDS_STAGE_4"
+qiime feature-classifier classify-sklearn --i-classifier /sc/arion/projects/MMEDS/mmeds_server_data/gg-13-8-99-nb-classifier.qza --i-reads $RUN_Qiime2/rep_seqs_table.qza --o-classification $RUN_Qiime2/taxonomy.qza --p-n-jobs 10;
+qiime taxa barplot --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --m-metadata-file $RUN_Qiime2/qiime_mapping_file_saliva.tsv --o-visualization $RUN_Qiime2/taxa_bar_plot.qzv;
+qiime taxa collapse --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --p-level 1 --o-collapsed-table $RUN_Qiime2/taxa_collapsed_table_L1.qza
+qiime taxa collapse --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --p-level 2 --o-collapsed-table $RUN_Qiime2/taxa_collapsed_table_L2.qza
+qiime taxa collapse --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --p-level 3 --o-collapsed-table $RUN_Qiime2/taxa_collapsed_table_L3.qza
+qiime taxa collapse --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --p-level 4 --o-collapsed-table $RUN_Qiime2/taxa_collapsed_table_L4.qza
+qiime taxa collapse --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --p-level 5 --o-collapsed-table $RUN_Qiime2/taxa_collapsed_table_L5.qza
+qiime taxa collapse --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --p-level 6 --o-collapsed-table $RUN_Qiime2/taxa_collapsed_table_L6.qza
+qiime feature-table merge --i-tables $RUN_Qiime2/taxa_collapsed_table_L1.qza $RUN_Qiime2/taxa_collapsed_table_L2.qza $RUN_Qiime2/taxa_collapsed_table_L3.qza $RUN_Qiime2/taxa_collapsed_table_L4.qza $RUN_Qiime2/taxa_collapsed_table_L5.qza $RUN_Qiime2/taxa_collapsed_table_L6.qza --p-overlap-method "error_on_overlapping_feature" --o-merged-table $RUN_Qiime2/taxa_collapsed_merged_table.qza;
+qiime feature-table relative-frequency --i-table $RUN_Qiime2/taxa_collapsed_merged_table.qza --o-relative-frequency-table $RUN_Qiime2/taxa_collapsed_relative_table.qza
+echo "MMEDS_FINISHED"
