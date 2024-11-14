@@ -1,0 +1,212 @@
+######
+# OA #
+######
+
+# minerva dir
+/sc/arion/projects/clemej05a/kevin/oa
+
+# fastq's are in
+/sc/arion/projects/clemej05a/kevin/oa/inputs/fastqs
+
+###
+# Directory mapping
+###
+
+
+inputs/
+	Qiime2_0														# AC run with MOC, buffer, and saliva + stool samples mixed
+
+jobs/
+	Q2_saliva.lsf 													# note that adiv and bdiv were run in shell <1min
+	lefse_L6_saliva.lsf
+
+outputs/
+	/sc/arion/projects/clemej05a/kevin/oa/outputs/Qiime2_saliva/	# Q2 from Q2_saliva.lsf
+		qiime_mapping_file_saliva.tsv								# must be copied over from inputs
+	jobs00/															# LEfSe L6 saliva, copy over the taxa collapsed L6 qza
+	jobs01/															# LEfSe L6 stool
+	jobs03/ 														# metadata association with pain
+	jobs02/															# mod and high adh only meta assoc with pain
+	jobs04/															# LEfSe L6 saliva adh
+	jobs05/															# LEfSe L6 stool adh
+	jobs06/ 														# modhigh, WOMAC_P_Response only
+	jobs07/															# picrust saliva adh
+	jobs08/															# picrust stool adh
+	jobs09/															# lefse taxa int correlatoin meta, diff diff saliva
+	jobs10/															# same but for stool
+	jobs11/															# lefse for stool resp
+	jobs12/															# lefse stool noresp
+	jobs13/															# lefse saliva resp
+	jobs14/															# lefse saliva noresp 
+																	# TBD TBH should toss LEfSe since not paired
+	jobs15/															# CUTIE saliva all (both pre post)
+	jobs16/															# CUTIE stool all (both pre post)
+	jobs17/															# Corr heatmap plots
+	jobs18/															# DA complete, lolipops
+	jobs19/															# mediation
+	jobs20/															# testing stability of mediation
+	jobs21/															# saliva meta taxa diff CUTIE r
+	jobs22/															# stool meta taxa diff CUTIE r
+	jobs23/															# saliva meta taxa diff CUTIE nr
+	jobs24/															# stool meta taxa diff CUTIE nr
+
+
+mediation/
+	20240913			# taxa post, meta post, pain for stool
+	20240917			# same but saliva
+	20241001			# diet, meta diff, pain for stool
+
+
+###
+# Paper Outline
+###
+
+def OA_paper():
+	# univariate analysis
+	for sample_type in [stool, saliva]:
+		for data_type in [metabolome, microbiome, pathway]:
+			for feat in data_type:
+				# DA includes, alpha, beta, paired alpha, paired beta where applicable
+				# Paired 4 way box plots can be pretty 
+				DA(pre, post) # paired t for metabolite, wilcoxon signed rank for microbiome
+				DA(resp, nonresp) @ baseline # unpaired
+				DA(resp, nonresp) @ after diet # unpaired
+				DA(resp, nonresp) @ paired differences 
+	
+	# integrated/multivariate analysis
+	abundance heatmaps of variables of interest/clustering
+	correlation heatmaps
+
+# Anything non sig goes to supp
+
+
+###
+# Paper Outline V2
+###
+
+# lolipop plot with resp non resp enrichment DA at PRE and POST
+# possible need to filter if too many taxa on the significant ones only! 
+(1) PRE (rg bars) - hue with significance, direction of enrichment in RESP vs Non RESP
+(2) POST (rg bars)
+
+
+# barplot with log of pre/post for ALL RESP and NONRESP
+(1) ALL
+(2) RESP
+(3) NON RESP
+
+
+# correlation heatmaps
+# (1) alpha/paired alpha/paired beta 
+
+(1) taxa - 
+
+
+
+# TBD mediation analysis
+
+
+### 
+# Mediation
+###
+/sc/arion/projects/clemej05a/jakleen/mediation_analysis/mediate.R
+
+/sc/arion/projects/clemej05a/jakleen/mediation_analysis/20240827/scripts/run_mediate.sh
+
+# saliva only?
+
+
+##
+# Beta div on pain response quartiles for each sample type
+
+
+module purge
+PYTHONPATH=/hpc/packages/minerva-centos7/anaconda3/2020.8/pkgs;
+export LC_ALL=en_US.UTF-8;
+ml anaconda3;
+source activate qiime2-2020.8.0;
+
+# do stool_adh and saliva_adh
+for i in stool_adh saliva_adh;
+do
+for j in WOMAC_pain_quartiles VAS_Pt_quartiles;
+do
+RUN_Qiime2=/sc/arion/projects/clemej05a/kevin/oa/outputs/Qiime2_${i}/;
+#qiime diversity filter-distance-matrix --i-distance-matrix $RUN_Qiime2/core_metrics_results/unweighted_unifrac_distance_matrix.qza --m-metadata-file /sc/arion/projects/clemej05a/kevin/oa/inputs/qiime_mapping_file_paired_beta_${i}_outcomes.tsv --o-filtered-distance-matrix $RUN_Qiime2/core_metrics_results/unweighted_unifrac_distance_matrix_adh.qza
+
+#qiime diversity beta-group-significance --i-distance-matrix $RUN_Qiime2/core_metrics_results/unweighted_unifrac_distance_matrix_adh.qza --m-metadata-file /sc/arion/projects/clemej05a/kevin/oa/inputs/qiime_mapping_file_paired_beta_${i}_outcomes.tsv --m-metadata-column ${j} --o-visualization $RUN_Qiime2/unweighted_${j}_significance.qzv --p-pairwise;
+
+qiime diversity core-metrics-phylogenetic --i-phylogeny $RUN_Qiime2/rooted_tree.qza --i-table $RUN_Qiime2/filtered_table.qza --p-sampling-depth 10000 --m-metadata-file /sc/arion/projects/clemej05a/kevin/oa/inputs/qiime_mapping_file_paired_beta_${i}_outcomes.tsv --p-n-jobs-or-threads 1  --output-dir $RUN_Qiime2/core_metrics_results_outcomes;
+done;
+done
+
+for i in stool_adh saliva_adh;
+do
+for j in WOMAC_pain_quartiles VAS_Pt_quartiles;
+do
+scp -r buk02@chimera.hpc.mssm.edu:/sc/arion/projects/clemej05a/kevin/oa/outputs/Qiime2_${i}/unweighted_${j}_significance.qzv /Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_${i}/;
+done;
+done
+
+
+
+cp Q2_saliva_adh_noresponse.lsf Q2_saliva_adh_pre.lsf
+sed -i 's/saliva_adh_noresponse/saliva_adh_pre/g' Q2_saliva_adh_pre.lsf
+
+cp Q2_saliva_adh_noresponse.lsf Q2_saliva_adh_post.lsf
+sed -i 's/saliva_adh_noresponse/saliva_adh_post/g' Q2_saliva_adh_post.lsf
+
+cp Q2_saliva_adh_noresponse.lsf Q2_stool_adh_pre.lsf
+sed -i 's/saliva_adh_noresponse/stool_adh_pre/g' Q2_stool_adh_pre.lsf
+
+cp Q2_saliva_adh_noresponse.lsf Q2_stool_adh_post.lsf
+sed -i 's/saliva_adh_noresponse/stool_adh_post/g' Q2_stool_adh_post.lsf
+
+
+cp ../inputs/qiime_mapping_file_saliva_adh_pre.tsv Qiime2_saliva_adh_pre/
+cp ../inputs/qiime_mapping_file_saliva_adh_post.tsv Qiime2_saliva_adh_post/
+cp ../inputs/qiime_mapping_file_stool_adh_pre.tsv Qiime2_stool_adh_pre/
+cp ../inputs/qiime_mapping_file_stool_adh_post.tsv Qiime2_stool_adh_post/
+
+
+
+###
+# LEfSe on Timepoint
+
+# chmod 777 the jobs dir and the output dir
+# submit from cologin
+
+/opt/collab/bin/cologin mmedsadmin
+
+# copy over the mapping file and L6 qza 
+# change lefse job (borrowed from twins shotgun) so that Diagnosis -> Timepoints and HostSubjectId -> Patient_ID
+
+##
+# might need to decontam a bit
+
+
+
+###
+# WOMAC resp vs no resp
+### 
+
+
+
+###
+# PICRUSt2
+###
+
+# move filtered_table.qza and rep_seqs_table.qza into the picrust job folder
+# chmod 777 both
+
+# need to unzip and chmod 777 the whole picrust2_out dir and its subdirs; incl pred_metagenome_unstrat.tsv.gz
+# /sc/arion/projects/clemej05a/kevin/oa/outputs/jobs07/picrust2_out/KO_metagenome_out
+
+RUN_PICRUST=/sc/arion/projects/clemej05a/kevin/oa/outputs/jobs07/
+
+python /sc/arion/projects/clemej05a/jakleen/humann/brite/map_ko_kegg_v3.py -i $RUN_PICRUST/picrust2_out/KO_metagenome_out/pred_metagenome_unstrat.tsv -m /sc/arion/projects/clemej05a/jakleen/humann/brite/ko_map_kegg_20240328.txt -o $RUN_PICRUST/picrust2_out/KO_metagenome_out/pred_metagenome_unstrat_kegg.tsv --no-strat
+
+
+
+
+
