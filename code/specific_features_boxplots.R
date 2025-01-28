@@ -160,8 +160,9 @@ for (i in 1:length(taxas)){
 # scatterplots
 pairs = list(
   c('Gut_Microbiome_Alpha_Diversity','WOMAC_Pain'),
-  c('Plasma_Metabolite_Alpha_Diversity','WOMAC_Pain'),
-  c('Gut_Lachnospiraceae_Limivivens','WOMAC_Pain')
+  c('Plasma_Metabolome_Alpha_Diversity','WOMAC_Pain'),
+  c('Gut_Lachnospiraceae_Limivivens','WOMAC_Pain'),
+  c('Gut_Lachnospiraceae_Anaerostipes','WOMAC_Pain')
 )
 
 
@@ -198,11 +199,10 @@ for (i in 1:length(pairs)){
     guides(shape = "none") + 
     geom_smooth(method='lm',color='black') +#,aes(x=.data[[p2]],y= .data[[p1]])) + 
     # ggtitle(paste0('p=',pv)) +
-    scale_x_continuous(labels = f.dec) + # 2 decimal places on x-axis
-    scale_y_continuous(labels = f.dec) +
+    scale_x_continuous(labels = label_number(accuracy = 0.0001))+#labels = f.dec) + # 2 decimal places on x-axis
+    scale_y_continuous()+#labels = f.dec) +
     bbkg + 
     ggtitle(paste0('r-sq=',as.character(r2),', p=',as.character(p)))   # https://stackoverflow.com/questions/39335005/add-p-value-and-r-on-ggplot-follow-up
-    # 2 decimal places on y-axis
   
   # save plot
   fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/jobs33/',p1,'_',p2,'.pdf')
@@ -230,12 +230,13 @@ dev.off()
 figure <- plot_grid(panels[[5]],
                     panels[[6]],
                     panels[[7]],
-                    labels = c('E','F','G'),
-                    ncol=3,nrow=1,
-                    rel_heights = c(1,1,1),
-                    rel_widths = c(1,1,1))
+                    panels[[8]],
+                    labels = c('E','F','G','H'),
+                    ncol=2,nrow=2,
+                    rel_heights = c(1,1,1,1),
+                    rel_widths = c(1,1,1,1))
 fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/jobs33/lmplots.pdf')
-pdf(file = fbp, height = 4, width = 16)
+pdf(file = fbp, height = 12, width = 12)
 plot(figure)
 dev.off()
 
@@ -329,15 +330,33 @@ df$Race = as.factor(df$Race)
 model=glm(WOMAC_Pain ~ Sex + HTN + Race,data=df)
 summary(model)
 
+
+model=glm(WOMAC_Pain ~  Plasma_Metabolome_Alpha_Diversity + Gut_Microbiome_Alpha_Diversity,data=df)
+summary(model)
+
 # Anti_Inflammatory_Diet_Score, HTN, Race only 1 AA
+# DM no comorbidities (DM=0)
 # men tended to respond less well
-model=glm(WOMAC_Pain ~  Plasma_Metabolite_Alpha_Diversity + Gut_Microbiome_Alpha_Diversity + Sex,data=df)
+model=glm(WOMAC_Pain ~  Plasma_Metabolome_Alpha_Diversity + Gut_Microbiome_Alpha_Diversity + HTN + Race + Sex,data=df)
+summary(model)
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)   
+#   (Intercept)                        21.5327     4.1279   5.216  0.01370 * 
+#   Plasma_Metabolite_Alpha_Diversity  15.8423     2.0090   7.886  0.00425 **
+#   Gut_Microbiome_Alpha_Diversity      9.6312     2.2628   4.256  0.02378 * 
+#   HTN1                               -0.8859     0.7428  -1.193  0.31871   
+#   RaceHispanic                      -23.1403     3.7960  -6.096  0.00887 **
+#   RaceWhite                         -25.2126     3.9983  -6.306  0.00806 **
+#   SexM                               -1.8762     0.6773  -2.770  0.06957 . 
+
+# lachno limi
+model=glm(WOMAC_Pain ~ Gut_Lachnospiraceae_Limivivens + HTN + Race + Sex,data=df)
 summary(model)
 
-model=glm(WOMAC_Pain ~  Plasma_Metabolite_Alpha_Diversity + Gut_Microbiome_Alpha_Diversity,data=df)
+# lachno anaero
+model=glm(WOMAC_Pain ~ Gut_Lachnospiraceae_Anaerostipes + HTN + Race + Sex,data=df)
 summary(model)
-
-
 
 
 

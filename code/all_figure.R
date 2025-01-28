@@ -163,12 +163,14 @@ paired_cols = list(
   c('red2','pink','lightgray','darkgray'), # 
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_stool_adh_noresponse/",
   c('pink','lightgray'),# 
+  
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh/",
   c('pink','lightgray','darkgray'), #
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh_response/",
   c('red2','pink','lightgray','darkgray'),#
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh_noresponse/",
   c('pink','lightgray'),#
+  
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Meta_stool_adh/",
   c('pink','lightgray','darkgray'),
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Meta_stool_adh_response/",
@@ -177,7 +179,7 @@ paired_cols = list(
   c('pink','lightgray','darkgray'),
   
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Meta_saliva_adh/",
-  c('red2','pink','lightgray','darkgray'),
+  c('pink','lightgray','darkgray'),
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Meta_saliva_adh_response/",
   c('pink','lightgray','darkgray'),
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Meta_saliva_adh_noresponse/",
@@ -519,25 +521,52 @@ for (i in 1:length(paired_dirs)){
 
 
 for (k in 1:3){
-  figure <- plot_grid(test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
-                      test[[3*(k-1)+19]], test[[3*(k-1)+20]], test[[3*(k-1)+21]],
-                      test[[3*(k-1)+37]], test[[3*(k-1)+38]], test[[3*(k-1)+39]],
+  figure <- plot_grid(#test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
+                      #test[[3*(k-1)+19]], test[[3*(k-1)+20]], test[[3*(k-1)+21]],
+                      #test[[3*(k-1)+37]], test[[3*(k-1)+38]], test[[3*(k-1)+39]],
                       test[[3*(k-1)+10]], test[[3*(k-1)+11]], test[[3*(k-1)+12]],
                       test[[3*(k-1)+28]], test[[3*(k-1)+29]], test[[3*(k-1)+30]],
       
-                      labels = c('A', '', '',
-                                  'B', '', '',
-                                  'C', '', '',
-                                  'D', '', '',
-                                  'E', '', ''), 
-                      ncol=3,nrow=5,
-                      rel_heights = rep(c(1,1,1),5),
-                      rel_widths = rep(c(1.25,1.5,2),5)) + ggtitle(basename(paired_dirs[k]))
-  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_',as.character(k),'_fullplot.pdf')
-  pdf(file = fbp, height = 20, width = 16)
+                      labels = c(#'A', '', '',
+                                  #'B', '', '',
+                                  #'C', '', '',
+                                  #'D. Salivary Microbiome', '', '',
+                                  #'E. Salivary Metabolome', '', ''), 
+                                  'A', 'B', 'C',
+                                  'D', 'E', 'F'), 
+                      ncol=3,nrow=2,
+                      rel_heights = rep(c(1,1,1),2),
+                      rel_widths = rep(c(1.25,1.5,2),2)) + ggtitle(basename(paired_dirs[k]))
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_',as.character(k),'_supp.pdf')
+  pdf(file = fbp, height = 8, width = 16)
   plot(figure)
   dev.off()
 }
+
+for (k in 1:3){
+  figure <- plot_grid(test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
+                      test[[3*(k-1)+19]], test[[3*(k-1)+20]], test[[3*(k-1)+21]],
+                      test[[3*(k-1)+37]], test[[3*(k-1)+38]], test[[3*(k-1)+39]],
+                      #test[[3*(k-1)+10]], test[[3*(k-1)+11]], test[[3*(k-1)+12]],
+                      #test[[3*(k-1)+28]], test[[3*(k-1)+29]], test[[3*(k-1)+30]],
+                      
+                      labels = c(#'A. Stool Microbiome', '', '',
+                                 'A', 'B', 'C',
+                                 #'B. Stool Metabolome', '', '',
+                                 'D', 'E', 'F',
+                                 # 'C. Plasma Metabolome', '', ''),
+                                'G', 'H', 'I'),
+                                #'D', '', '',
+                                 #'E', '', ''), 
+                      ncol=3,nrow=3,
+                      rel_heights = rep(c(1,1,1),3),
+                      rel_widths = rep(c(1.25,1.5,2),3)) + ggtitle(basename(paired_dirs[k]))
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_',as.character(k),'_main.pdf')
+  pdf(file = fbp, height = 12, width = 16)
+  plot(figure)
+  dev.off()
+}
+
 
 
 
@@ -740,23 +769,47 @@ for (k in 1:2){
   figure <- plot_grid(test[[3*(k-1)+7]], test[[3*(k-1)+8]], test[[3*(k-1)+9]],
                       test[[3*(k-1)+25]], test[[3*(k-1)+26]], test[[3*(k-1)+27]],
                       test[[3*(k-1)+19]], test[[3*(k-1)+20]], test[[3*(k-1)+21]],
-                      test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
-                      test[[3*(k-1)+13]], test[[3*(k-1)+14]], test[[3*(k-1)+15]],
+                      #test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
+                      #test[[3*(k-1)+13]], test[[3*(k-1)+14]], test[[3*(k-1)+15]],
                       
-                      labels = c('A', '', '',
-                                 'B', '', '',
-                                 'C', '', '',
-                                 'D', '', '',
-                                 'E', '', ''), 
-                      ncol=3,nrow=5,
-                      rel_heights = rep(c(1,1,1),5),
-                      rel_widths = rep(c(1.25,1.5,2),5)) + ggtitle(basename(paired_dirs[k]))
-  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_up_',as.character(k),'_fullplot.pdf')
-  pdf(file = fbp, height = 20, width = 16)
+                      labels = c('A','B','C',
+                                  'D','E','F',
+                                  'G','H','I'),
+                                  #A. Stool Microbiome', '', '',
+                                 #'B. Stool Metabolome', '', '',
+                                 #'C. Plasma Metabolome', '', ''),
+                                 #'D', '', '',
+                                 #'E', '', '', 
+                      ncol=3,nrow=3,#5,
+                      rel_heights = rep(c(1,1,1),3),#5),
+                      rel_widths = rep(c(1.25,1.5,2),3)) + ggtitle(basename(paired_dirs[k]))
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_up_',as.character(k),'_main.pdf')
+  pdf(file = fbp, height = 4 * 3, width = 16)
   plot(figure)
   dev.off()
 }
-  
+
+for (k in 1:2){
+  figure <- plot_grid(#test[[3*(k-1)+7]], test[[3*(k-1)+8]], test[[3*(k-1)+9]],
+                      #test[[3*(k-1)+25]], test[[3*(k-1)+26]], test[[3*(k-1)+27]],
+                      #test[[3*(k-1)+19]], test[[3*(k-1)+20]], test[[3*(k-1)+21]],
+                      test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
+                      test[[3*(k-1)+13]], test[[3*(k-1)+14]], test[[3*(k-1)+15]],
+                      
+                      labels = c(#'A', '', '',
+                                 #'B', '', '',
+                                 #'C', '', '',
+                                 'A','B','C',#. Salivary Microbiome', '', '',
+                                 'D','E','F'),#. Salivary Metabolome', '', ''), 
+                      ncol=3,nrow=2,#5,
+                      rel_heights = rep(c(1,1,1),2),
+                      rel_widths = rep(c(1.25,1.5,2),2)) + ggtitle(basename(paired_dirs[k]))
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_up_',as.character(k),'_supp.pdf')
+  pdf(file = fbp, height = 4 * 2, width = 16)
+  plot(figure)
+  dev.off()
+}
+
 
 test = list()
 for (i in 1:length(diff_dirs)){
@@ -802,7 +855,11 @@ figure <- plot_grid(test[[1]],
                     test[[4]],
                     test[[5]],
                     
-                    labels = c('A', 'B', 'C','D','E'),
+                    labels = c('A. Stool Microbiome', 
+                               'B. Stool Metabolome',
+                               'C. Plasma Metabolome',
+                               'D. Salivary Microbiome',
+                               'E. Salivary Metabolome'),
                     ncol=1,nrow=5,
                     rel_heights = c(1,1,1,1,1),
                     rel_widths = c(1,1,1,1,1)) + ggtitle(basename(paired_dirs[k]))
