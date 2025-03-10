@@ -246,6 +246,77 @@ df=read.table('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/inputs/df_corr_R.
               sep='\t', header=TRUE, row.names = 1)
 
 cormat <- round(cor(df),2)
+data <- cormat
+
+library(pheatmap)
+
+# Annotations ===================================================
+
+# create a data frame for column annotation
+#ann_df <- data.frame(Group = rep(c("Disease", "Control"), c(5, 5)),
+#                     Lymphocyte_count = rnorm(10))
+#row.names(ann_df) <- colnames(data)
+#head(ann_df)
+
+#gene_functions_df <- data.frame(gene_functions = rep(c('Oxidative_phosphorylation', 
+#                                                       'Cell_cycle',
+#                                                       'Immune_regulation',
+#                                                       'Signal_transduction',
+#                                                       'Transcription'), rep(10, 5)))
+#row.names(gene_functions_df) <- rownames(data)
+
+#ann_colors <- list(
+#  gene_functions = c("Oxidative_phosphorylation" = "#F46D43",
+#                     "Cell_cycle" = "#708238",
+#                     "Immune_regulation" = "#9E0142",
+#                     "Signal_transduction" = "beige", 
+#                     "Transcription" = "violet"), 
+#  Group = c("Disease" = "darkgreen",
+#            "Control" = "blueviolet"),
+#  Lymphocyte_count = brewer.pal(5, 'PuBu')
+#)
+
+test_labels <- cormat # matrix(cormat, nrow(cormat), ncol(cormat)) 
+final_labels <- cormat
+final_labels[test_labels == 1] <- ""
+final_labels[abs(test_labels) >= 0.73 & abs(test_labels) < 1] <- "**"
+#final_labels[abs(test_labels) >= 0.5 & abs(test_labels) < 1] <- "**"
+final_labels[abs(test_labels) >= 0.6 & abs(test_labels) < 0.73] <- "*"
+#final_labels[abs(test_labels) >= 0.25 & abs(test_labels) < 0.5] <- "*"
+final_labels[abs(test_labels) <= 0.6] <- ""
+#final_labels[abs(test_labels) <= 0.25] <- ""
+
+
+#test_labels[test_labels >= 0.25] <- "\u2217"
+
+
+# Base heatmap ===================================================
+heat_plot <- pheatmap(data, 
+                      # col = brewer.pal(10, 'RdYlGn'), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_distance_cols = 'euclidean',
+                      clustering_distance_rows = 'euclidean',
+                      clustering_method = 'ward.D',
+                      # display_numbers = T,
+                      display_numbers = final_labels,
+                      fontsize_number = 24,
+                      #annotation_row = gene_functions_df, # row (gene) annotations
+                      #annotation_col = ann_df, # column (sample) annotations
+                      #annotation_colors = ann_colors, # colours for your annotations
+                      #annotation_names_row = F, 
+                      #annotation_names_col = F,
+                      fontsize_row = 16,          # row label font size
+                      fontsize_col = 16,          # column label font size 
+                      #angle_col = 45, # sample names at an angle
+                      #legend_breaks = c(-2, 0, 2), # legend customisation
+                      #legend_labels = c("Low", "Medium", "High"), # legend customisation
+                      #show_colnames = T, show_rownames = F, # displaying column and row names
+                      #main = "Super heatmap with annotations"
+                      ) # a title for our heatmap
+
+pdf(height = 12, width = 12,file='/Users/KevinBu/Desktop/clemente_lab/Projects/oa/pheatmap2.pdf')
+heat_plot
+dev.off()
 
 library(reshape2)
 melted_cormat <- melt(cormat)
@@ -306,8 +377,8 @@ figure <- ggheatmap +
                                title.position = "top", title.hjust = 0.5))
 
 
-fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/jobs33/heatmap.pdf')
-pdf(file = fbp, height = 8, width = 8)
+fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/jobs33/heatmap3.pdf')
+pdf(file = fbp, height = 12, width = 12)
 plot(figure)
 dev.off()
 
