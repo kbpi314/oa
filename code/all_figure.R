@@ -115,7 +115,7 @@ unpaired_dirs = c(
   
 )
 
-
+# these are beta PERMANOVA p values from Q2 output; alpha pvals are computed in this R script
 paired_p = c(
   '0.985', # stool otu
   '0.960', # res
@@ -155,6 +155,7 @@ unpaired_p = c(
   '0.635', # stool meta
   '0.280'
 )
+
 
 paired_cols = list(
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_stool_adh/",
@@ -289,11 +290,12 @@ for (i in 1:length(paired_dirs)){
   print(dir)
   
   df_alpha = read.table(paste0(dir,'metadata.tsv'), 
-                        sep = '\t', 
-                        header = TRUE, 
+                        header=T,
+                        quote='',
                         row.names = 1,
                         check.names = FALSE, 
-                        na.strings = "NA")
+                        na.strings = "NA",
+                        sep='\t')
   
   #drop na
   df_alpha = df_alpha[!is.na(df_alpha$WOMAC_pain),]
@@ -315,8 +317,17 @@ for (i in 1:length(paired_dirs)){
   
   # calculate adiv
   stats.table.all[1,1] <- 'shannon_entropy' # colnames(df_alpha)[1] # Timepoint is the first column
-  stats.table.all[1,2] <- wilcox.test(shannon_entropy ~ Timepoint, data = df_alpha, paired = TRUE)$p.value
-  stats.table.all[1,3] <- t.test(shannon_entropy ~ Timepoint, data = df_alpha, paired = TRUE)$p.value
+  # stats.table.all[1,2] <- wilcox.test(shannon_entropy ~ Timepoint, data = df_alpha, paired = TRUE)$p.value
+  stats.table.all[1,2] <- wilcox.test(x=df_alpha[df_alpha$Timepoint == 'Post',]$shannon_entropy, # convention for direction is x - y
+                                      y=df_alpha[df_alpha$Timepoint == 'Pre',]$shannon_entropy,
+                                      paired=TRUE)$p.value
+  
+  
+  #stats.table.all[1,3] <- t.test(shannon_entropy ~ Timepoint, data = df_alpha, paired = TRUE)$p.value
+  stats.table.all[1,3] <- t.test(x=df_alpha[df_alpha$Timepoint == 'Post',]$shannon_entropy,
+                                 y=df_alpha[df_alpha$Timepoint == 'Pre',]$shannon_entropy,
+                                 paired=TRUE)$p.value
+  
   
   # save
   ft.all = paste0(outdir,'/',basename(dir),"_paired_alpha_stats.csv")
@@ -449,6 +460,12 @@ for (i in 1:length(paired_dirs)){
     # create filenames
     filename_plot = paste(basename(dir),"bdiv", dists[j], "plot.pdf", sep = "_")
     
+    # grab df 
+    df_pe <- read.delim(file=paste0(dir,"pe.tsv"),
+                        row.names=1)
+    pe1 = as.character(round(as.numeric(df_pe[1, 1])*100, 1))
+    pe2 = as.character(round(as.numeric(df_pe[2, 1])*100, 1))
+    
     # plot beta diversity
     pv = paired_p[i]
     pb <- ggplot() + # data=df, aes(x = PC1, y = PC2, fill = Diagnosis)) +
@@ -458,7 +475,9 @@ for (i in 1:length(paired_dirs)){
       ggtitle(paste0('p=',pv)) +
       scale_x_continuous(labels = f.dec) + # 2 decimal places on x-axis
       scale_y_continuous(labels = f.dec) +
-      bbkg # 2 decimal places on y-axis
+      xlab(paste0('PC1 (',pe1, '%)')) +
+      ylab(paste0('PC2 (',pe2, '%)')) +
+      bbkg 
     
     # save plot
     fp = paste(outdir, filename_plot, sep = "")
@@ -471,7 +490,7 @@ for (i in 1:length(paired_dirs)){
   col1 = paired_cols[[i]]
   
   # read in df
-  df = read.table(paste0(dir,'barplot_data.tsv'), 
+  df = read.table(paste0(dir,'barplot_data.tsv'), quote="",
                   sep = '\t', header = TRUE)#, row.names = 1, check.names = FALSE, na.strings = "NA")
   
   # use reorder to reorder the factor
@@ -519,7 +538,7 @@ for (i in 1:length(paired_dirs)){
   test[[3*(i-1) + 3]] = pc
 }
 
-
+# salivary figures
 for (k in 1:3){
   figure <- plot_grid(#test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
                       #test[[3*(k-1)+19]], test[[3*(k-1)+20]], test[[3*(k-1)+21]],
@@ -532,8 +551,8 @@ for (k in 1:3){
                                   #'C', '', '',
                                   #'D. Salivary Microbiome', '', '',
                                   #'E. Salivary Metabolome', '', ''), 
-                                  'A', 'B', 'C',
-                                  'D', 'E', 'F'), 
+                                  'A', '', '',
+                                  'B', '', ''), 
                       ncol=3,nrow=2,
                       rel_heights = rep(c(1,1,1),2),
                       rel_widths = rep(c(1.25,1.5,2),2)) + ggtitle(basename(paired_dirs[k]))
@@ -543,6 +562,7 @@ for (k in 1:3){
   dev.off()
 }
 
+# stool figures
 for (k in 1:3){
   figure <- plot_grid(test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
                       test[[3*(k-1)+19]], test[[3*(k-1)+20]], test[[3*(k-1)+21]],
@@ -551,11 +571,11 @@ for (k in 1:3){
                       #test[[3*(k-1)+28]], test[[3*(k-1)+29]], test[[3*(k-1)+30]],
                       
                       labels = c(#'A. Stool Microbiome', '', '',
-                                 'A', 'B', 'C',
+                                 'A', '', '',
                                  #'B. Stool Metabolome', '', '',
-                                 'D', 'E', 'F',
+                                 'B', '', '',
                                  # 'C. Plasma Metabolome', '', ''),
-                                'G', 'H', 'I'),
+                                'C', '', ''),
                                 #'D', '', '',
                                  #'E', '', ''), 
                       ncol=3,nrow=3,
@@ -568,19 +588,36 @@ for (k in 1:3){
 }
 
 
+# new figure 6 
+# k was an iterator through ALL, R, and NR (k=1 to 3 respectively)
+# there are 45 plots
+# plot 1 is stool micro all alpha, plot 2 is stool micro all beta, plot 3 is stool micro all DA
+# plot 4 is stool micro R alpha ...
+# plot 7 is stool micro NR alpha ...
+# plot 10 is saliva micro all alpha
+# ...
+# plot 40, 41, 42 are plasma meta R
+# plot 43, 44, 45 are plasma meta NR 
 
-
-
-# 15 iterations
-# 3 figures come out of this
-# each one contains 5 panels each with 3 subpanels = 45 total panels
-# each loop creates one panel 
-# iterations i, i + 3, i + 6, i + 9 and i + 12 belong to the same figure
-# to store this without overlapping, we create a list of 45 
-# l[0+i], l[15+i], l[30 + i]
-# when we construct the figure, we will iterate via 
-
-
+figure <- plot_grid(test[[4]], test[[5]], test[[6]],
+                    test[[7]], test[[8]], test[[9]],
+                    test[[40]], test[[41]], test[[42]],
+                    test[[43]], test[[44]], test[[45]],
+                    labels = c(#'A. Stool Microbiome', '', '',
+                      'A', '', '',
+                      #'B. Stool Metabolome', '', '',
+                      'B', '', '',
+                      # 'C. Plasma Metabolome', '', ''),
+                      'C', '', '',
+                    'D', '', ''),
+                    #'E', '', '', 
+                    ncol=3,nrow=4,
+                    rel_heights = rep(c(1,1,1),4),
+                    rel_widths = rep(c(1.25,1.5,2),4)) # + ggtitle(basename(paired_dirs[k]))
+fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_6_main.pdf')
+pdf(file = fbp, height = 16, width = 16)
+plot(figure)
+dev.off()
 
 
 
@@ -607,6 +644,7 @@ for (i in 1:length(unpaired_dirs)){
   print(dir)
   
   df_alpha = read.table(paste0(dir,'metadata.tsv'), 
+                        quote="",
                         sep = '\t', 
                         header = TRUE, 
                         row.names = 1,
@@ -626,8 +664,8 @@ for (i in 1:length(unpaired_dirs)){
   
   # calculate adiv
   stats.table.all[1,1] <- 'shannon_entropy' # colnames(df_alpha)[1] # Timepoint is the first column
-  stats.table.all[1,2] <- wilcox.test(shannon_entropy ~ WOMAC_P_Response, data = df_alpha, paired = FALSE)$p.value
-  stats.table.all[1,3] <- t.test(shannon_entropy ~ WOMAC_P_Response, data = df_alpha, paired = FALSE)$p.value
+  stats.table.all[1,2] <- wilcox.test(shannon_entropy ~ WOMAC_P_Response, data = df_alpha)$p.value # by default using formula method makes it unpaired testing
+  stats.table.all[1,3] <- t.test(shannon_entropy ~ WOMAC_P_Response, data = df_alpha)$p.value
   
   # save
   ft.all = paste0(outdir,'/',basename(dir),"_unpaired_alpha_stats.csv")
@@ -709,6 +747,12 @@ for (i in 1:length(unpaired_dirs)){
     # create filenames
     filename_plot = paste(basename(dir),"bdiv", dists[j], "plot.pdf", sep = "_")
     
+    # grab expl var
+    df_pe <- read.delim(file=paste0(dir,"pe.tsv"),
+                        row.names=1)
+    pe1 = as.character(round(as.numeric(df_pe[1, 1])*100, 1))
+    pe2 = as.character(round(as.numeric(df_pe[2, 1])*100, 1))
+    
     # plot beta diversity
     pv = unpaired_p[i]
     pb <- ggplot() + # data=df, aes(x = PC1, y = PC2, fill = Diagnosis)) +
@@ -718,6 +762,8 @@ for (i in 1:length(unpaired_dirs)){
       ggtitle(paste0('p=',pv)) +
       scale_x_continuous(labels = f.dec) + # 2 decimal places on x-axis
       scale_y_continuous(labels = f.dec) +   # 2 decimal places on y-axis
+      xlab(paste0('PC1 (',pe1, '%)')) +
+      ylab(paste0('PC2 (',pe2, '%)')) +
       bbkg 
 
     # save plot
@@ -732,7 +778,7 @@ for (i in 1:length(unpaired_dirs)){
   col1 = unpaired_cols[[i]]
   
   # read in df
-  df = read.table(paste0(dir,'barplot_data.tsv'), 
+  df = read.table(paste0(dir,'barplot_data.tsv'),quote="", 
                   sep = '\t', header = TRUE)#, row.names = 1, check.names = FALSE, na.strings = "NA")
   
   # use reorder to reorder the factor
@@ -772,9 +818,9 @@ for (k in 1:2){
                       #test[[3*(k-1)+1]], test[[3*(k-1)+2]], test[[3*(k-1)+3]],
                       #test[[3*(k-1)+13]], test[[3*(k-1)+14]], test[[3*(k-1)+15]],
                       
-                      labels = c('A','B','C',
-                                  'D','E','F',
-                                  'G','H','I'),
+                      labels = c('A','','',
+                                  'B','','',
+                                  'C','',''),
                                   #A. Stool Microbiome', '', '',
                                  #'B. Stool Metabolome', '', '',
                                  #'C. Plasma Metabolome', '', ''),
@@ -799,8 +845,8 @@ for (k in 1:2){
                       labels = c(#'A', '', '',
                                  #'B', '', '',
                                  #'C', '', '',
-                                 'A','B','C',#. Salivary Microbiome', '', '',
-                                 'D','E','F'),#. Salivary Metabolome', '', ''), 
+                                 'A','','',#. Salivary Microbiome', '', '',
+                                 'B','',''),#. Salivary Metabolome', '', ''), 
                       ncol=3,nrow=2,#5,
                       rel_heights = rep(c(1,1,1),2),
                       rel_widths = rep(c(1.25,1.5,2),2)) + ggtitle(basename(paired_dirs[k]))
@@ -817,7 +863,7 @@ for (i in 1:length(diff_dirs)){
   col1 = diff_cols[[i]]
   
   # read in df
-  df = read.table(paste0(dir,'barplot_data.tsv'), 
+  df = read.table(paste0(dir,'barplot_data.tsv'), quote="",
                   sep = '\t', header = TRUE)#, row.names = 1, check.names = FALSE, na.strings = "NA")
   
   # use reorder to reorder the factor
