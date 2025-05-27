@@ -166,7 +166,7 @@ paired_cols = list(
   c('pink','lightgray'),# 
   
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh/",
-  c('pink','lightgray','darkgray'), #
+  c('pink','lightgray','darkgray','purple'), #
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh_response/",
   c('red2','pink','lightgray','darkgray'),#
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh_noresponse/",
@@ -198,7 +198,7 @@ paired_cols = list(
 
 unpaired_cols = list(
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh_pre/",
-  c('lightgreen','lightblue'),
+  c('lightgreen','lightblue','purple','red'),
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_saliva_adh_post/",
   c('lightgreen','lightblue','blue2'),
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_stool_adh_pre/",
@@ -339,8 +339,8 @@ for (i in 1:length(paired_dirs)){
   a <- 'shannon_entropy'
   # create filenames
   filename_table = paste(a, basename(dir), "all_table.csv", sep = "_")
-  filename_box.plot = paste(a, basename(dir), "all_box.plot.pdf", sep = "_")  
-  filename_line.plot = paste(a, basename(dir), "all_line.plot.pdf", sep = "_")  
+  filename_box.plot = paste(a, basename(dir), "all_box.plot_rclr.pdf", sep = "_")  
+  filename_line.plot = paste(a, basename(dir), "all_line.plot_rclr.pdf", sep = "_")  
   
   # create categories by which to color lineplot: 1) Increase, 2) Decrease, 3) No change
   # subset and spread dataset into Timepoint columns
@@ -458,7 +458,7 @@ for (i in 1:length(paired_dirs)){
   
   for (j in seq_along(dists)) {
     # create filenames
-    filename_plot = paste(basename(dir),"bdiv", dists[j], "plot.pdf", sep = "_")
+    filename_plot = paste(basename(dir),"bdiv", dists[j], "plot_rclr.pdf", sep = "_")
     
     # grab df 
     df_pe <- read.delim(file=paste0(dir,"pe.tsv"),
@@ -468,6 +468,9 @@ for (i in 1:length(paired_dirs)){
     
     # plot beta diversity
     pv = paired_p[i]
+    df_permanova <- read.delim(file=paste0(dir,"permanova.tsv"),
+                              row.names=1)
+    pv = as.character(round(as.numeric(df_permanova[1, 2]), 3))
     pb <- ggplot() + # data=df, aes(x = PC1, y = PC2, fill = Diagnosis)) +
       geom_point(data = df, aes(x = PC1, y = PC2, color = Timepoint), size=4) + #shape = sib_02),size=4) +
       scale_color_manual(values = c("Pre" = col1[1], "Post" = col1[2])) + #col1, labels = c("Unaffected", "RA")) +
@@ -507,14 +510,14 @@ for (i in 1:length(paired_dirs)){
   df$Enrichment_Significance = factor(df$Enrichment_Significance, levels = c('Post_FDR','Post_NonFDR','Post_NS','Pre_NS','Pre_NonFDR','Pre_FDR',
                                                                              'R_FDR','R_NonFDR','R_NS','NR_NS','NR_NonFDR','NR_FDR'))
   
-  pc <- ggplot(df, aes(x = logp, y = feature, fill = Enrichment_Significance)) +
+  pc <- ggplot(df, aes(x = effect_size, y = feature, fill = Enrichment_Significance)) +
     geom_bar(stat = "identity", position = "dodge") +
     labs(x = "sgn(enrichment)*log10p", y = "Feature") +
     scale_fill_manual(values = col1) +
     
     theme_minimal()
   
-  fbp = paste0(dir, 'es_barplot.pdf')
+  fbp = paste0(dir, 'es_barplot_rclr.pdf')
   pdf(file = fbp, height = 5, width = 6)
   plot(pc)
   dev.off()
@@ -528,7 +531,7 @@ for (i in 1:length(paired_dirs)){
   #                     ncol=3,nrow=1,
   #                     rel_heights = c(1,1,1),
   #                     rel_widths = c(1.25,1.5,2)) + ggtitle(basename(dir))
-  # fbp = paste0(dir, 'fullplot.pdf')
+  # fbp = paste0(dir, 'fullplot_rclr.pdf')
   # pdf(file = fbp, height = 4, width = 16)
   # plot(figure)
   # dev.off()
@@ -556,7 +559,7 @@ for (k in 1:3){
                       ncol=3,nrow=2,
                       rel_heights = rep(c(1,1,1),2),
                       rel_widths = rep(c(1.25,1.5,2),2)) + ggtitle(basename(paired_dirs[k]))
-  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_',as.character(k),'_supp.pdf')
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_',as.character(k),'_supp_rclr.pdf')
   pdf(file = fbp, height = 8, width = 16)
   plot(figure)
   dev.off()
@@ -581,7 +584,7 @@ for (k in 1:3){
                       ncol=3,nrow=3,
                       rel_heights = rep(c(1,1,1),3),
                       rel_widths = rep(c(1.25,1.5,2),3)) + ggtitle(basename(paired_dirs[k]))
-  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_',as.character(k),'_main.pdf')
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_',as.character(k),'_main_rclr.pdf')
   pdf(file = fbp, height = 12, width = 16)
   plot(figure)
   dev.off()
@@ -614,7 +617,7 @@ figure <- plot_grid(test[[4]], test[[5]], test[[6]],
                     ncol=3,nrow=4,
                     rel_heights = rep(c(1,1,1),4),
                     rel_widths = rep(c(1.25,1.5,2),4)) # + ggtitle(basename(paired_dirs[k]))
-fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_6_main.pdf')
+fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_6_main_rclr.pdf')
 pdf(file = fbp, height = 16, width = 16)
 plot(figure)
 dev.off()
@@ -677,7 +680,7 @@ for (i in 1:length(unpaired_dirs)){
   a <- 'shannon_entropy'
   # create filenames
   filename_table = paste(a, basename(dir), "all_table.csv", sep = "_")
-  filename_box.plot = paste(a, basename(dir), "all_box.plot.pdf", sep = "_")  
+  filename_box.plot = paste(a, basename(dir), "all_box.plot_rclr.pdf", sep = "_")  
   
   # rewrite order of factors
   df_alpha$WOMAC_P_Response <- factor(df_alpha$WOMAC_P_Response, levels = c('R', 'NR'))
@@ -745,7 +748,7 @@ for (i in 1:length(unpaired_dirs)){
   
   for (j in seq_along(dists)) {
     # create filenames
-    filename_plot = paste(basename(dir),"bdiv", dists[j], "plot.pdf", sep = "_")
+    filename_plot = paste(basename(dir),"bdiv", dists[j], "plot_rclr.pdf", sep = "_")
     
     # grab expl var
     df_pe <- read.delim(file=paste0(dir,"pe.tsv"),
@@ -755,6 +758,9 @@ for (i in 1:length(unpaired_dirs)){
     
     # plot beta diversity
     pv = unpaired_p[i]
+    df_permanova <- read.delim(file=paste0(dir,"permanova.tsv"),
+                               row.names=1)
+    pv = as.character(round(as.numeric(df_permanova[1, 2]), 3))
     pb <- ggplot() + # data=df, aes(x = PC1, y = PC2, fill = Diagnosis)) +
       geom_point(data = df, aes(x = PC1, y = PC2, color = WOMAC_P_Response), size=4) + #shape = sib_02),size=4) +
       scale_color_manual(values = c("R" = col1unpaired[1], "NR" = col1unpaired[2])) + #col1, labels = c("Unaffected", "RA")) +
@@ -794,14 +800,14 @@ for (i in 1:length(unpaired_dirs)){
   df$Enrichment_Significance = factor(df$Enrichment_Significance, levels = c('Post_FDR','Post_NonFDR','Post_NS','Pre_NS','Pre_NonFDR','Pre_FDR',
                                                                              'R_FDR','R_NonFDR','R_NS','NR_NS','NR_NonFDR','NR_FDR'))
   
-  pc <- ggplot(df, aes(x = logp, y = feature, fill = Enrichment_Significance)) +
+  pc <- ggplot(df, aes(x = effect_size, y = feature, fill = Enrichment_Significance)) +
     geom_bar(stat = "identity", position = "dodge") +
     labs(x = "sgn(enrichment)*log10p", y = "Feature") +
     scale_fill_manual(values = col1) +
     
     theme_minimal()
   
-  fbp = paste0(dir, 'es_barplot.pdf')
+  fbp = paste0(dir, 'es_barplot_rclr.pdf')
   pdf(file = fbp, height = 5, width = 6)
   plot(pc)
   dev.off()
@@ -829,7 +835,7 @@ for (k in 1:2){
                       ncol=3,nrow=3,#5,
                       rel_heights = rep(c(1,1,1),3),#5),
                       rel_widths = rep(c(1.25,1.5,2),3)) + ggtitle(basename(paired_dirs[k]))
-  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_up_',as.character(k),'_main.pdf')
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_up_',as.character(k),'_main_rclr.pdf')
   pdf(file = fbp, height = 4 * 3, width = 16)
   plot(figure)
   dev.off()
@@ -850,7 +856,7 @@ for (k in 1:2){
                       ncol=3,nrow=2,#5,
                       rel_heights = rep(c(1,1,1),2),
                       rel_widths = rep(c(1.25,1.5,2),2)) + ggtitle(basename(paired_dirs[k]))
-  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_up_',as.character(k),'_supp.pdf')
+  fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_up_',as.character(k),'_supp_rclr.pdf')
   pdf(file = fbp, height = 4 * 2, width = 16)
   plot(figure)
   dev.off()
@@ -880,14 +886,14 @@ for (i in 1:length(diff_dirs)){
   # apply the same order to the whole data
   df$feature = factor(df$feature, levels = levels(df$feature))
   
-  p <- ggplot(df, aes(x = logp, y = feature, fill = Enrichment_Significance)) +
+  p <- ggplot(df, aes(x = effect_size, y = feature, fill = Enrichment_Significance)) +
     geom_bar(stat = "identity", position = "dodge") +
-    labs(x = "log10p", y = "Feature") +
+    labs(x = "sgn(direction)*log10p", y = "Feature") +
     scale_fill_manual(values = col1) +
     
     theme_minimal()
   
-  fbp = paste0(dir, 'es_barplot.pdf')
+  fbp = paste0(dir, 'es_barplot_rclr.pdf')
   pdf(file = fbp, height = 5, width = 6)
   plot(p)
   dev.off()
@@ -909,7 +915,7 @@ figure <- plot_grid(test[[1]],
                     ncol=1,nrow=5,
                     rel_heights = c(1,1,1,1,1),
                     rel_widths = c(1,1,1,1,1)) + ggtitle(basename(paired_dirs[k]))
-fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_diffs_',as.character(k),'_fullplot.pdf')
+fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/figure_diffs_',as.character(k),'_fullplot_rclr.pdf')
 pdf(file = fbp, height = 18, width = 8)
 plot(figure)
 dev.off()

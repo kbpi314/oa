@@ -8,6 +8,9 @@ library(ggrepel)
 library(tidyverse)
 library(dplyr)
 library(tidyr)
+library(scales)
+library(ggpubr)
+library(cowplot)
 
 ############################################################################
 ############################################################################
@@ -159,14 +162,19 @@ for (i in 1:length(taxas)){
 
 # scatterplots
 pairs = list(
-  c('Gut_Microbiome_Alpha_Diversity','WOMAC_Pain'),
-  c('Plasma_Metabolome_Alpha_Diversity','WOMAC_Pain'),
-  c('Gut_Lachnospiraceae_Limivivens','WOMAC_Pain'),
-  c('Gut_Lachnospiraceae_Anaerostipes','WOMAC_Pain')
+  #c('Gut_Microbiome_Alpha_Diversity','WOMAC_Pain'),
+  #c('Plasma_Metabolome_Alpha_Diversity','WOMAC_Pain'),
+  #c('Gut_Lachnospiraceae_Limivivens','WOMAC_Pain'),
+  #c('Gut_Lachnospiraceae_Anaerostipes','WOMAC_Pain')
+  c('Lachnospiraceae_Limivivens','WOMAC_Pain'),
+  c('Lachnospiraceae_Limivivens', 'Pyridoxine'),
+  c('Lachnospiraceae_Anaerostipes','WOMAC_Pain'),
+  c('Lachnospiraceae_Anaerostipes','Hydroxydecanoic_acid')
+  
 )
 
 
-df=read.table('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/inputs/df_corr_R_label.tsv',
+df=read.table('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/inputs/df_corr_R2_label.tsv',
               sep='\t', header=TRUE, row.names = 1)
 df[df=="No response"]<-"NR"
 df[df=="Response"]<-"R"
@@ -191,7 +199,7 @@ for (i in 1:length(pairs)){
   p2 = pairs[[i]][2]
   fit = lm(df[[p2]] ~ df[[p1]])
   r2=round(summary(fit)$r.squared,2)
-  p=round(summary(fit)$coefficients[,4],4)
+  p=round(summary(fit)$coefficients[,4][2],4)
   
   figure <- ggplot(data = df, aes(x = .data[[p1]], y = .data[[p2]])) + # data=df, aes(x = PC1, y = PC2, fill = Diagnosis)) +
     geom_point(size=4,aes(color = WOMAC_P_Response)) + #shape = sib_02),size=4) +
@@ -231,7 +239,7 @@ figure <- plot_grid(panels[[5]],
                     panels[[6]],
                     panels[[7]],
                     panels[[8]],
-                    labels = c('E','F','G','H'),
+                    labels = c('D','E','F','G'),
                     ncol=2,nrow=2,
                     rel_heights = c(1,1,1,1),
                     rel_widths = c(1,1,1,1))
@@ -242,11 +250,15 @@ dev.off()
 
 # heatmap
 
-df=read.table('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/inputs/df_corr_R.tsv',
+df=read.table('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/inputs/df_corr_R2.tsv',
               sep='\t', header=TRUE, row.names = 1)
 
 cormat <- round(cor(df),2)
 data <- cormat
+
+library("Hmisc")
+pmat <- rcorr(as.matrix(df))$P
+
 
 library(pheatmap)
 
@@ -279,11 +291,13 @@ library(pheatmap)
 test_labels <- cormat # matrix(cormat, nrow(cormat), ncol(cormat)) 
 final_labels <- cormat
 final_labels[test_labels == 1] <- ""
-final_labels[abs(test_labels) >= 0.73 & abs(test_labels) < 1] <- "**"
-#final_labels[abs(test_labels) >= 0.5 & abs(test_labels) < 1] <- "**"
-final_labels[abs(test_labels) >= 0.6 & abs(test_labels) < 0.73] <- "*"
-#final_labels[abs(test_labels) >= 0.25 & abs(test_labels) < 0.5] <- "*"
-final_labels[abs(test_labels) <= 0.6] <- ""
+#final_labels[abs(test_labels) >= 0.73 & abs(test_labels) < 1] <- "**"
+final_labels[pmat < 0.1] <- ""
+#final_labels[abs(test_labels) >= 0.6 & abs(test_labels) < 0.73] <- "*"
+final_labels[pmat < 0.05] <- "*"
+final_labels[pmat < 0.01] <- "**"
+final_labels[pmat >= 0.1] <- ""
+
 #final_labels[abs(test_labels) <= 0.25] <- ""
 
 
@@ -314,7 +328,7 @@ heat_plot <- pheatmap(data,
                       #main = "Super heatmap with annotations"
                       ) # a title for our heatmap
 
-pdf(height = 12, width = 12,file='/Users/KevinBu/Desktop/clemente_lab/Projects/oa/pheatmap2.pdf')
+pdf(height = 12, width = 12,file='/Users/KevinBu/Desktop/clemente_lab/Projects/oa/pheatmap4.pdf')
 heat_plot
 dev.off()
 
@@ -377,7 +391,7 @@ figure <- ggheatmap +
                                title.position = "top", title.hjust = 0.5))
 
 
-fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/jobs33/heatmap3.pdf')
+fbp = paste0('/Users/KevinBu/Desktop/clemente_lab/Projects/oa/outputs/jobs33/heatmap5.pdf')
 pdf(file = fbp, height = 12, width = 12)
 plot(figure)
 dev.off()
