@@ -115,48 +115,6 @@ unpaired_dirs = c(
   
 )
 
-# these are beta PERMANOVA p values from Q2 output; alpha pvals are computed in this R script
-paired_p = c(
-  '0.985', # stool otu
-  '0.960', # res
-  '0.913', # nr
-  
-  '0.490', # saliva otu
-  '0.680',
-  '0.970',
-  
-  '0.335', # meta stool
-  '0.405',
-  '0.375',
-  
-  '0.815', # meta saliva
-  '0.900',
-  '0.865',
-  
-  '0.005', # meta plasma
-  '0.035',
-  '0.115'
-  
-)
-
-unpaired_p = c(
-  '0.580', # saliva otu pre
-  '0.330', # post
-  
-  '0.950', # stool otu
-  '0.150',
-  
-  '0.415', # saliva meta
-  '0.705',
-  
-  '0.955', # plasma meta
-  '0.805',
-  
-  '0.635', # stool meta
-  '0.280'
-)
-
-
 paired_cols = list(
   # "~/Desktop/clemente_lab/Projects/oa/outputs/Qiime2_stool_adh/",
   c('red2','pink','lightgray','darkgray'), # good
@@ -306,6 +264,9 @@ for (i in 1:length(paired_dirs)){
   df_alpha <- df_alpha |>
     filter(n() > 1, .by = HostSubjectId)
   
+  # get sample size
+  n = nrow(df_alpha)
+  
   # capitalize Timepoint
   df_alpha$Timepoint = str_to_title(df_alpha$Timepoint)
   
@@ -363,29 +324,6 @@ for (i in 1:length(paired_dirs)){
   # rewrite order of factors
   d.final$Timepoint <- factor(d.final$Timepoint, levels = c('Pre', 'Post'))
   
-  # save dataset
-  # ft = paste(outdir,filename_table, sep = "")
-  # write.csv(d.final, file = ft)
-  
-  # plot boxplot
-  p <- ggplot(data = df_alpha, aes(x = Timepoint, y = shannon_entropy, fill = Timepoint)) +
-    stat_summary(fun.data = stats.whiskers, geom = "errorbar", 
-                 color = "black", size = 0.8, width = 0.3) +
-    stat_summary(fun.data = stats.boxplot, geom = "crossbar", 
-                 color = "black", size = 0.5, width = 0.5) +
-    geom_jitter(width = 0.1, size = 1.5) +
-    scale_x_discrete(labels = c('Pre', 'Post')) +
-    scale_fill_manual(values = col1) +      
-    xlab(NULL) +
-    ylab("Shannon Entropy") +
-    abkg
-  
-  # don't plot the boxplot...
-  # fpb = paste(outdir, filename_box.plot, sep = "")
-  # pdf(file = fpb, height = 4.5, width = 4)
-  # plot(p)
-  # dev.off()
-  
   # plot lineplot
   pv = as.numeric(stats.table.all[1,2])
   pa <- ggplot(data = d.final, aes(x = Timepoint, y = shannon_entropy, fill = Timepoint)) +
@@ -403,7 +341,7 @@ for (i in 1:length(paired_dirs)){
     scale_color_manual(values = col2, name = "Difference", labels = c("Increase", "Decrease", "No change")) +      
     xlab(NULL) +
     ylab("Shannon Entropy") +
-    ggtitle(paste0('p=',as.character(round(pv,3)))) + 
+    ggtitle(paste0('n=',as.character(n),'; p=',as.character(round(pv,3)))) +  # https://stackoverflow.com/questions/39335005/add-p-value-and-r-on-ggplot-follow-up
     abkg
   
   if (pv < 0.05){
@@ -450,6 +388,9 @@ for (i in 1:length(paired_dirs)){
   df <- df |>
     filter(n() > 1, .by = HostSubjectId)
   
+  # grab sample size
+  n = nrow(df)
+
   # capitalize Timepoint
   df$Timepoint = str_to_title(df$Timepoint)
   
@@ -475,7 +416,7 @@ for (i in 1:length(paired_dirs)){
       geom_point(data = df, aes(x = PC1, y = PC2, color = Timepoint), size=4) + #shape = sib_02),size=4) +
       scale_color_manual(values = c("Pre" = col1[1], "Post" = col1[2])) + #col1, labels = c("Unaffected", "RA")) +
       guides(shape = "none") + 
-      ggtitle(paste0('p=',pv)) +
+      ggtitle(paste0('n=',n,'; p=',pv)) +
       scale_x_continuous(labels = f.dec) + # 2 decimal places on x-axis
       scale_y_continuous(labels = f.dec) +
       xlab(paste0('PC1 (',pe1, '%)')) +
@@ -659,6 +600,9 @@ for (i in 1:length(unpaired_dirs)){
   df_alpha[df_alpha=="No response"]<-"NR"
   df_alpha[df_alpha=="Response"]<-"R"
   
+  # get sample size
+  n=nrow(df_alpha)
+  
   ### Alpha Diversity Statistics ###
   
   # create tables for storing wilcoxon and ttest results
@@ -696,7 +640,7 @@ for (i in 1:length(unpaired_dirs)){
     scale_x_discrete(labels = c('R', 'NR')) +
     scale_fill_manual(values = col1unpaired) +      
     xlab(NULL) + 
-    ggtitle(paste0('p=',as.character(round(pv,3)))) +  # https://stackoverflow.com/questions/39335005/add-p-value-and-r-on-ggplot-follow-up
+    ggtitle(paste0('n=',as.character(n),'; p=',as.character(round(pv,3)))) +  # https://stackoverflow.com/questions/39335005/add-p-value-and-r-on-ggplot-follow-up
     ylab("Shannon Entropy") +
     abkg
   
@@ -743,6 +687,9 @@ for (i in 1:length(unpaired_dirs)){
   df[df=="No response"]<-"NR"
   df[df=="Response"]<-"R"
   
+  # grab sample size
+  n=nrow(df)
+  
   # order factors for legend
   df$WOMAC_P_Response <- factor(df$WOMAC_P_Response, levels = c('R', 'NR'))
   
@@ -765,7 +712,7 @@ for (i in 1:length(unpaired_dirs)){
       geom_point(data = df, aes(x = PC1, y = PC2, color = WOMAC_P_Response), size=4) + #shape = sib_02),size=4) +
       scale_color_manual(values = c("R" = col1unpaired[1], "NR" = col1unpaired[2])) + #col1, labels = c("Unaffected", "RA")) +
       guides(shape = "none") + 
-      ggtitle(paste0('p=',pv)) +
+      ggtitle(paste0('n=',n,'; p=',pv)) +
       scale_x_continuous(labels = f.dec) + # 2 decimal places on x-axis
       scale_y_continuous(labels = f.dec) +   # 2 decimal places on y-axis
       xlab(paste0('PC1 (',pe1, '%)')) +
